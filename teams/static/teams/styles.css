@@ -1,0 +1,402 @@
+body {
+    font-family: Verdana,Arial,Helvetica,sans-serif; 
+}
+
+html, body, #white { 
+    background-color: white;
+}
+
+.updatehere, .addtoteam input {
+    font-size: 15px;
+    text-align: left;
+    margin: none;
+    color: darkred;
+}
+
+select, option {
+    width: 500px;
+}
+
+.defense {
+    margin-left: 180px;
+}
+
+.viewhere {
+    text-align: right;
+    font-size: 13px;
+}
+
+.viewhere a {
+    color: black;
+    font-weight: bold;
+}
+
+.viewhere button:hover {
+    text-decoration: none; 
+    background-color: lightsteelblue;
+}
+
+h1, h2 {
+    text-align: center; 
+    font-weight: bold;
+    margin-right: 20px;
+}
+
+h2 {
+    margin-left: 10px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+h3 {
+    font-weight: bold;
+    margin-top: 3px;
+    margin-left: 20px;
+}
+
+h4 {
+    font-size: 14px;
+    color: darkslategrey;
+    text-align: left; 
+    border-top: thin solid darkslategrey;
+    border-bottom: thin solid darkslategrey;
+}
+
+.title-row, .player-row  {
+    font-size: 18px;  
+    height: 30px;
+    text-align: left;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+ .game-row  {
+    font-size: 18px;  
+    height: 30px;
+    text-align: left;
+    margin-left: 120px;
+}
+
+.title-row {
+    font-weight: bold;
+}
+
+.stats-row, .statsTitle-row {
+    font-size: 17px;  
+    height: 20px;
+    text-align: left;
+}
+
+.statsTitle-row {
+    font-weight: bold;
+}
+
+#banner table {
+    border: thin solid black;
+}
+
+#banner-title {
+    height: 100;
+    padding: 20px; 
+    margin-top: 16px;
+    text-align: center;
+}
+
+#logo {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.blue { 
+    background-color: darkblue; 
+}
+
+.red {
+    background-color: darkred;
+}
+
+li {
+    margin-right: 40px;
+    text-align: center;
+}
+
+.callout { 
+    font-family: Verdana,Arial,Helvetica,sans-serif;
+    text-align: center; 
+    background-color: white; 
+    margin-left: 20px;
+    margin-right: 20px;
+    margin-bottom: 20px;
+}
+
+#header-margin {
+    height: 20px;
+}
+
+.header-body {
+    height: 30px;
+}
+
+#main-margin {
+    height: 20px;
+    background-color: darkblue;
+}
+
+#menubody {
+    background-color: darkblue;
+}
+
+#menu table {
+    background-color: white;
+    border-collapse: collapse;
+}
+
+#menu th {
+    font-family: Arial,Verdana,Helvetica,sans-serif;
+    height: 15px;
+    text-align: center;
+    line-height: 15px;
+    padding: 5px;
+    text-align: center;
+ }
+
+ #indexTab, #viewTeamTab, #buildTeamTab, #buildGameTab, #loginTab, #logoutTab, #viewPlayersTab, #viewScheduleTab, #joinGameTab, #gameTab {
+    border: 1px solid darkblue;
+}
+
+@media (min-width: 1100px) {
+    #menu {
+        margin-left: 240px;
+        margin-top: 15px;
+    }
+    .callout {
+        font-size: 18px;  
+    }
+    h1 {
+        font-size: 30px;
+    }    
+    h2 {
+        font-size: 24px;
+    }
+    h3 {
+        font-size: 18px; 
+    }
+}
+
+@media (max-width: 1099px) {
+    #menu {
+        margin-left: 180px;
+        margin-top: 10px;
+    }
+    .callout {
+        font-size: 15px;
+    }
+    h1 {
+        font-size: 30px;
+    }
+    h2 {
+        font-size: 24px;
+    }
+    h3 {
+        font-size: 18px; 
+    }
+    #whitespace {
+        display: none;
+    }
+}
+
+@media (max-width: 799px) {
+    #menu {
+        margin-left: 60px;
+        margin-top: 4px;
+        font-size: 10px;
+    }
+    .callout {
+        font-size: 15px;
+    }
+    h1 {
+        font-size: 26px;
+    }
+    h2 {
+        font-size: 20px;
+    }
+    h3 {
+        font-size: 15px; 
+    }
+    #whitespace {
+        display: none;
+    }
+}
+
+@media (max-width: 499px) {
+    #menu {
+        margin-left: 40px;
+        margin-top: 0px;
+        font-size: 10px;
+    }
+    .callout {
+        font-size: 10px;
+    }
+    h1 {
+        font-size: 20px;
+    }
+    h2 {
+        font-size: 15px;
+    }
+    h3 {
+        font-size: 13px;
+    }
+    #whitespace {
+        display: none;
+    }
+    .white {
+        width: 0%;
+    }
+}
+
+#menu {
+    text-align: center;
+}
+
+#menu a {
+    color: darkblue;
+}
+
+#menu a:link {
+    text-decoration: none;
+}
+
+#menu a:visited {
+    text-decoration: none;
+}
+
+#menu th:hover {
+    text-decoration: none; 
+    color: white; 
+    background-color: rgb(155, 68, 68);
+}
+
+#menu #youarehere { 
+    background-color: darkblue; 
+    color: white; 
+    border-bottom: 1px solid darkblue;
+}
+
+.playermenu table {
+    border-collapse: collapse;
+    width: 80%;
+    padding: 5px;
+    text-align: center;
+    margin-left: 70px;
+    margin-bottom: 10px;
+}
+
+.team-header {
+    color: darkred;
+    text-align: right;   
+}
+
+.team a, .compare-player a, .page-link, .page-link a {
+    color: darkred;
+}
+
+.team {
+    margin-left: 20px;
+}
+
+.left {
+    text-align: left;
+}
+
+.radioleft {
+    text-align: left;
+    margin-left: 0px;
+}
+
+label {
+    font-size:18px;
+    vertical-align: left;
+}
+  
+input[type="radio"] {
+    vertical-align: left;
+}
+
+table .white {
+    border-bottom: thin solid white;
+}
+
+.white {
+    background-color: white;
+}
+
+.nav-link {
+    display: block;
+    padding: 0;
+    color: darkblue;
+}
+
+#user-name {
+    font-size: 15px;
+    margin-top: 15px;
+    margin-right: 10px;
+    text-align: right;
+}
+
+.add-player, .add-player a, .update-player, .view-player, .remove-player, .compare-player, .submit-player, .view-player a, .update-player a {
+    font-size: 15px;
+    text-align: left;
+    color: darkred;
+}
+
+.add-player, .add-player a
+{
+    margin-left: 70px;
+}
+
+.update-player input:hover, .update-player button:hover, .remove-player input:hover, .compare-player button:hover, .page-link input:hover, .addtoteam input:hover, .submit-player input:hover, .view-player button:hover, input:hover {
+    text-decoration: none; 
+    background-color: rgb(155, 68, 68);
+    color: white;
+}
+
+.card {
+    margin-bottom: 0px;
+}
+
+#footer a {
+    color: darkred;
+}
+
+#footer {
+    text-align: center;
+    color: darkred;
+}
+
+.item-desc {
+    text-align: left;
+}
+
+.item-desc {
+    font-size: 16px;
+    margin-bottom: 0px;
+    margin-top: 0px;
+}
+
+.total-desc {
+    font-size: 17px;
+    margin-right: 10px;
+    text-align: center;
+    border-top: thin solid black;
+}
+
+.message-desc {
+    font-size: 16px;
+    color: black;
+    text-align: center;
+}
+
+#team_id input:hover, #view-team input:hover {
+    text-decoration: none; 
+    background-color: rgb(155, 68, 68);
+}
