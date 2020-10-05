@@ -1,0 +1,341 @@
+{% extends "teams/base.html" %}
+{% load staticfiles %}
+
+{% block title %}
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+<script src="{% static 'teams/index.js' %}"></script>
+{% endblock %}
+
+{% block user %}
+    {% if user %}
+        <div id="user-name">{{ user }}</div>
+    {% endif %}
+{% endblock %}
+
+{% block header %}
+<table width="75%">
+  <tr>
+      <th id="indexTab" width="8%">
+        <a id="index" href="{% url 'index' %}" class="menu-link" data-page="index">Main</a>
+      </th>
+      <th id="youarehere" width="10%">
+        <a id="youarehere" href="{% url 'viewPlayers' %}" class="menu-link" data-page="viewPlayers">Players</a>
+      </th>
+      <th id="viewScheduleTab" width="14%">
+        <a id="viewSchedule" href="{% url 'viewSchedule' %}" class="menu-link" data-page="viewSchedule">View Schedule</a>
+      </th>
+    <th id="viewTeamTab" width="14%">
+        <a id="viewTeam" href="{% url 'viewTeam' team_id %}" class="menu-link" data-page="viewTeam">Fantasy Team</a>
+    </th>
+    <th id="joinGameTab" width="12%">
+        <a id="joinGame" href="{% url 'submitTeam' %}" class="menu-link" data-page="submitTeam">Join Game</a>
+    </th>
+      <th id="loginTab" width="9%">
+        <a id="login" href="{% url 'login' %}" class="menu-link" data-page="login">Login</a>
+      </th>
+      <th id="logoutTab" width="9%">
+        <a id="logout" href="{% url 'logout' %}"  class="menu-link" data-page="logout">Logout</a>
+      </th>
+  </tr>
+</table>
+{% endblock %}
+
+{% block body %}
+<div class="row no-gutters">
+  <div class="col-md-12" id="menubody">
+    <div id="main" width=100%>
+      <div class="callout" width="100%">
+        <p id="main-margin">&nbsp</p>
+        <div class="card">
+          <div class="row no-gutters" class="title-row">
+            <div class="col-md-12">
+                <h2>Compare Player Stats</h2>
+            </div>
+          </div>
+          {% if pick %}
+            <form id="player-update{{ pick.id }}" action="{% url 'viewCompare' %}" method="post">
+              {% csrf_token %}
+                <div class="form-row justify-content-start">
+                  {% if pick.position == 8 %}
+                    <div class="col-md-7">
+                      <span class="radioleft">
+                        <input class="form-check-input" type="radio" name="player" id="playerPick" value="{{ pick.id }}">
+                      </span>
+                      <label class="form-check-label" for="playerPick">
+                        Defense/Special Teams for {{ pick.get_teamId_display }}: 
+                      </label>
+                    </div>
+                  {% else %}
+                    <div class="col-md-7">
+                      <span class="radioleft">
+                        <input class="form-check-input" type="radio" name="player" id="playerPick" value="{{ pick.id }}">
+                      </span>
+                      <label class="form-check-label" for="playerPick">
+                        {{ pick.get_position_display }} {{ pick.firstName }} {{ pick.lastName}} #{{ pick.number}} w/{{ pick.get_teamId_display }} -{{ pick.get_status_display }}: 
+                      </label>
+                    </div>
+                  {% endif %}
+                  <div class="col-md-2">
+                    <p>&nbsp</p>
+                  </div>
+                  <div class="col-md-3">
+                    <p>${{ pick.price }}</p>
+                  </div>
+                </div>
+                <div class="form-row justify-content-start">
+                  <div class="col-md-2">
+                    <p>&nbsp</p>
+                  </div>
+                  <div class="col-md-2">
+                    <p>ProjPts: {{ pick_stats.projPts }}</p>
+                  </div>
+                  <div class="col-md-2">
+                    <p>Ranking: {{ pick_stats.ranking }}</p>
+                  </div>
+                  <div class="col-md-6">
+                    {% for game in games %}
+                      {% if pick.teamId == game.homeTeam %}
+                        <p>Opponent: {{ game.get_awayTeam_display }}</p> 
+                      {% elif pick.teamId == game.awayTeam %}
+                        <p>Opponent: {{ game.get_homeTeam_display }}</p> 
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+                <div class="form-row justify-content-start">
+                  {% if player1.position == 8 %}
+                    <div class="col-md-7">
+                      <span class="radioleft">
+                        <input class="form-check-input" type="radio" name="player" id="player1" value="{{ player1.id }}">
+                      </span>
+                      <label class="form-check-label" for="player1">
+                        Defense/Special Teams for {{ player1.get_teamId_display }}: 
+                      </label>
+                    </div>
+                  {% else %}
+                    <div class="col-md-7">
+                      <span class="radioleft">
+                        <input class="form-check-input" type="radio" name="player" id="player1" value="{{ player1.id }}">
+                      </span>
+                      <label class="form-check-label" for="player1">
+                        {{ player1.get_position_display }} {{ player1.firstName }} {{ player1.lastName}} #{{ player1.number}} w/{{ player1.get_teamId_display }} -{{ player1.get_status_display }}: 
+                      </label>
+                    </div>
+                  {% endif %}
+                  <div class="col-md-2">
+                    <p>&nbsp</p>
+                  </div>
+                  <div class="col-md-3">
+                    <p>${{ player1.price }}</p>
+                  </div>
+                </div>
+                <div class="form-row justify-content-start">
+                  <div class="col-md-2">
+                    <p>&nbsp</p>
+                  </div>
+                  <div class="col-md-2">
+                    <p>ProjPts: {{ player1_stats.projPts }}</p>
+                  </div>
+                  <div class="col-md-2">
+                    <p>Ranking: {{ player1_stats.ranking }}</p>
+                  </div>
+                  <div class="col-md-6">
+                    {% for game in games %}
+                      {% if player1.teamId == game.homeTeam %}
+                        <p>Opponent: {{ game.get_awayTeam_display }}</p> 
+                      {% elif player1.teamId == game.awayTeam %}
+                        <p>Opponent: {{ game.get_homeTeam_display }}</p> 
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+                {% if player2 %}
+                  <div class="form-row justify-content-start">
+                    {% if player2.position == 8 %}
+                      <div class="col-md-7">
+                        <span class="radioleft">
+                          <input class="form-check-input" type="radio" name="player" id="player2" value="{{ player2.id }}">
+                        </span>
+                        <label class="form-check-label" for="player2">
+                          Defense/Special Teams for {{ player2.get_teamId_display }}: 
+                        </label>
+                      </div>
+                    {% else %}
+                      <div class="col-md-7">
+                        <span class="radioleft">
+                          <input class="form-check-input" type="radio" name="player" id="player2" value="{{ player2.id }}">
+                        </span>
+                        <label class="form-check-label" for="player2">
+                          {{ player2.get_position_display }} {{ player2.firstName }} {{ player2.lastName}} #{{ player2.number}} w/{{ player2.get_teamId_display }} -{{ player2.get_status_display }}: 
+                        </label>
+                      </div>
+                    {% endif %}
+                    <div class="col-md-2">
+                      <p>&nbsp</p>
+                    </div>
+                    <div class="col-md-3">
+                      <p>${{ player2.price }}</p>
+                    </div>
+                  </div>
+                  <div class="form-row justify-content-start">
+                    <div class="col-md-2">
+                      <p>&nbsp</p>
+                    </div>
+                    <div class="col-md-2">
+                      <p>ProjPts: {{ player2_stats.projPts }}</p>
+                    </div>
+                    <div class="col-md-2">
+                      <p>Ranking: {{ player2_stats.ranking }}</p>
+                    </div>
+                    <div class="col-md-6">
+                      {% for game in games %}
+                        {% if player2.teamId == game.homeTeam %}
+                          <p>Opponent: {{ game.get_awayTeam_display }}</p> 
+                        {% elif player2.teamId == game.awayTeam %}
+                          <p>Opponent: {{ game.get_homeTeam_display }}</p> 
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endif %}
+                {% if player3 %}
+                  <div class="form-row justify-content-start">
+                    {% if player3.position == 8 %}
+                      <div class="col-md-7">
+                        <span class="radioleft">
+                          <input class="form-check-input" type="radio" name="player" id="player3" value="{{ player3.id }}">
+                        </span>
+                        <label class="form-check-label" for="player3">
+                          Defense/Special Teams for {{ player3.get_teamId_display }}: 
+                        </label>
+                      </div>
+                    {% else %}
+                      <div class="col-md-7">
+                        <span class="radioleft">
+                          <input class="form-check-input" type="radio" name="player" id="player3" value="{{ player3.id }}">
+                        </span>
+                        <label class="form-check-label" for="player3">
+                          {{ player3.get_position_display }} {{ player3.firstName }} {{ player3.lastName}} #{{ player3.number}} w/{{ player3.get_teamId_display }} -{{ player3.get_status_display }}: 
+                        </label>
+                      </div>
+                    {% endif %}
+                    <div class="col-md-2">
+                      <p>&nbsp</p>
+                    </div>
+                    <div class="col-md-3">
+                      <p>${{ player3.price }}</p>
+                    </div>
+                  </div>
+                  <div class="form-row justify-content-start">
+                    <div class="col-md-2">
+                      <p>&nbsp</p>
+                    </div>
+                    <div class="col-md-2">
+                      <p>ProjPts: {{ player3_stats.projPts }}</p>
+                    </div>
+                    <div class="col-md-2">
+                      <p>Ranking: {{ player3_stats.ranking }}</p>
+                    </div>
+                    <div class="col-md-6">
+                      {% for game in games %}
+                        {% if player3.teamId == game.homeTeam %}
+                          <p>Opponent: {{ game.get_awayTeam_display }}</p> 
+                        {% elif player3.teamId == game.awayTeam %}
+                          <p>Opponent: {{ game.get_homeTeam_display }}</p> 
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endif %}
+                <div class="form-row justify-content-start">
+                  {% if pick.position == 8 %}
+                    <div class="col-md-12">
+                      <input class="form-check-input" type="hidden" name="pos" id="pos" value="6">
+                    </div>
+                  {% elif pick.position == 7 %}
+                    <div class="col-md-12">
+                      <select name="pos" id="pos" required style="width:250px;">
+                        <option value=10>Please Select</option>
+                        <option value=8>K</option>
+                        <option value=7>FLEX</option>
+                      </select>
+                    </div>
+                  {% elif pick.position == 0 %}
+                    <div class="col-md-12">
+                      <select name="pos" id="pos" required style="width:250px;">
+                        <option value=10>Please Select</option>
+                        <option value=0>QB</option>
+                        <option value=7>FLEX</option>
+                      </select>
+                    </div>
+                  {% elif pick.position == 1 or player3.position == 2 %}
+                    <div class="col-md-12">
+                      <select name="pos" id="pos" required style="width:250px;">
+                        <option value=10>Please Select</option>
+                        <option value=1>RB1</option>
+                        <option value=2>RB2</option>
+                        <option value=7>FLEX</option>
+                      </select>
+                    </div>
+                  {% elif pick.position == 3 %}
+                      <div class="col-md-12">
+                      <select name="pos" id="pos" required style="width:250px;">
+                        <option value=10>Please Select</option>
+                        <option value=3>WR1</optionvalue=7>
+                        <option value=4>WR2</option>
+                        <option value=7>FLEX</option>
+                      </select>
+                    </div>
+                  {% elif pick.position == 4 %}
+                    <div class="col-md-12">
+                      <select name="pos" id="pos" required style="width:250px;">
+                        <option value=10>Please Select</option>
+                        <option value=5>TE</option>
+                        <option value=7>FLEX</option>
+                      </select>
+                    </div>
+                  {% else %}
+                    <div class="col-md-12">
+                      <input class="form-check-input" type="hidden" name="pos" id="pos" value="7">
+                    </div>
+                  {% endif %}
+                </div>
+                <div class="row no-gutters">
+                  <div class="col-md-12">
+                    <p>&nbsp</p>
+                  </div>
+                </div>
+                <div class="row no-gutters" class="player-row">
+                  {% if pick.position == 8 %}
+                    <div class="col-md-12">
+                      <input class="submit-player" type="submit" value="Add Choice for Defense/Special Teams Position to Fantasy Team"/>
+                    </div>
+                  {% elif pick.position == 7 %}
+                    <div class="col-md-12">
+                      <input class="submit-player" type="submit" value="Add Choice for Kicker Position to Fantasy Team"/>
+                    </div>
+                  {% else %}
+                    <div class="col-md-12">
+                      <input class="submit-player" type="submit" value="Add Choice and Selected Position to Fantasy Team"/>
+                    </div>
+                  {% endif %}
+                </div>
+            </form>         
+          {% endif %}
+          <div class="row no-gutters">
+            <div class="col-md-12">
+              <p>&nbsp</p>
+            </div>
+          </div>
+        </div>
+        <div class="card mb-3">
+          <div class="row no-gutters">
+            <div class="col-md-6"><a href="{% url 'index' %}">Return to main page</a></div>
+            <div class="col-md-6"><a href="{% url 'viewPlayers' %}">Go back to players page (cancel)</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

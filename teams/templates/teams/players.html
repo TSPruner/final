@@ -1,0 +1,192 @@
+{% extends "teams/base.html" %}
+{% load staticfiles %}
+
+{% block title %}
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+<script src="{% static 'teams/index.js' %}"></script>
+{% endblock %}
+
+{% block user %}
+    {% if user %}
+        <div id="user-name">{{ user }}</div>
+    {% endif %}
+{% endblock %}
+
+{% block header %}
+<table width="70%">
+  <tr>
+    <th id="viewIndexTab" width="8%">
+      <a id="viewIndex" href="{% url 'index' %}" class="menu-link" data-page="index">Main</a>
+    </th>
+    <th id="youarehere" width="10%">
+      <a id="youarehere" href="{% url 'viewPlayers' %}" class="menu-link" data-page="viewPlayers">Players</a>
+    </th>
+    <th id="viewScheduleTab" width="14%">
+      <a id="viewSchedule" href="{% url 'viewSchedule' %}" class="menu-link" data-page="viewSchedule">View Schedule</a>
+    </th>
+    {% if reg_user %}
+      <th id="viewTeamTab" width="14%">
+        <a id="viewTeam" href="{% url 'viewTeam' team_id %}" class="menu-link" data-page="viewTeam">Fantasy Team</a>
+      </th>
+    {% else %}
+      <th id="viewTeamTab" width="12%">
+        <a id="viewTeam" href="{% url 'viewNFLTeam' team_id %}" class="menu-link" data-page="viewNFLTeam">NFL Team</a>
+      </th>
+    {% endif %}
+    {% if reg_user %}
+      <th id="joinGameTab" width="12%">
+        <a id="joinGame" href="{% url 'submitTeam' %}" class="menu-link" data-page="submitTeam">Join Game</a>
+      </th>
+    {% else %}
+      <th id="gameTab" width="14%">
+        <a id="updateGame" href="{% url 'updateGame' %}" class="menu-link" data-page="updateGame">Update Game</a>
+      </th>
+    {% endif %}
+    <th id="loginTab" width="9%">
+      <a id="login" href="{% url 'login' %}" class="menu-link" data-page="login">Login</a>
+    </th>
+    <th id="logoutTab" width="9%">
+      <a id="logout" href="{% url 'logout' %}"  class="menu-link" data-page="logout">Logout</a>
+    </th>
+  </tr>
+</table>
+{% endblock %}
+
+{% block body %}
+<div class="row no-gutters">
+  <div class="col-md-12" id="menubody">
+    <div id="main" width=100%>
+      <div class="callout" width="100%">
+        <p id="main-margin">&nbsp</p>
+        <div class="card">
+          {% if pick %}
+            {% for player_info in players %}
+              <div class="row no-gutters" class="title-row">
+                <div class="col-md-12">
+                  <h2>View Player Stats</h2>
+                </div>
+              </div>
+              {% if forloop.first %}
+                <div class="row no-gutters" class="title-row">
+                  <div class="col-md-12">
+                    <h2>&nbsp</h2>
+                  </div>
+                </div>
+                <form id="player-update" action="{% url 'viewPlayers' %}" method="post">
+                  {% csrf_token %}
+                    <div class="row no-gutters">
+                      <div class="col-md-6">
+                        <p>Filter by Position:</p>
+                      </div>
+                      <div class="col-md-6">
+                        <select name="pos" id="pos">
+                            <option value=0>QB</option>
+                            <option value=1>RB</option>
+                            <option value=2>FB</option>
+                            <option value=3>WR</option>
+                            <option value=4>TE</option>
+                            <option value=5>OL</option>
+                            <option value=6>DEF</option>
+                            <option value=7>PK</option>
+                            <option value=8>P</option>
+                            <option value=9>LS</option>
+                        </select>
+                      </div>
+                    </div>
+                </form>
+                <div class="row no-gutters" class="title-row">
+                  <div class="col-md-4">
+                    <h3>Player</h3>
+                  </div>
+                  <div class="col-md-2">
+                    <h3>Price</h3>
+                  <div class="col-md-2">
+                    <h3>ProjPts</h3>
+                  </div>
+                  <div class="col-md-2">
+                    <h3>Ranking</h3>
+                  </div>
+                  <div class="col-md-2">
+                    <h3>&nbsp</h3>
+                  </div>
+                </div>
+              {% endif %}
+              <span class="player-row">
+                  {% if player_info.position == 8 %}
+                    <div class="row no-gutters">
+                      <div class="col-md-4">
+                        <p>{{ player_info.get_teamId_display }} - Defense</p>
+                      </div>
+                      <div class="col-md-2">
+                        <p>${{ player_info.price }}</p>
+                      </div>
+                      {% for player in def_stats %}
+                        <div class="col-md-2">
+                            <p>{{ player.projPts }}</p>
+                        </div>
+                        <div class="col-md-2">
+                            <p>{{ player.ranking }}</p>
+                        </div>
+                      {% endfor %}
+                  {% elif player_info.position == 7 %}
+                    <div class="row no-gutters">
+                      <div class="col-md-4">
+                        <p>{{ player_info.get_position_display }}: {{ player_info.firstName }} {{ player_info.lastName }} #{{ player_info.number }}</p>
+                      </div>
+                      <div class="col-md-2">
+                        <p>Price: ${{ player_info.price }}</p>
+                      </div>
+                      {% for player in kick_stats %}
+                        <div class="col-md-2">
+                          <p>{{ player.projPts }}</p>
+                        </div>
+                        <div class="col-md-2">
+                          <p>{{ player.ranking }}</p>
+                        </div>
+                      {% endfor %}
+                  {% else %}
+                      <div class="row no-gutters">
+                        <div class="col-md-4">
+                          <p>{{ player_info.get_position_display }}: {{ player_info.firstName }} {{ player_info.lastName }} #{{ player_info.number }}</p>
+                        </div>
+                        <div class="col-md-2">
+                          <p>Price: ${{ player_info.price }}</p>
+                        </div>
+                        {% for player in off_stats %}
+                          <div class="col-md-2">
+                            <p>{{ player.projPts }}</p>
+                            </div>
+                          <div class="col-md-2">
+                            <p>{{ player.ranking }}</p>
+                          </div>
+                        {% endfor %}
+                  {% endif %}
+                  {% if admin %}
+                    <div class="col-md-2">
+                        <button class="update-player"><a title="Click to Update Stats" href="{% url 'updateStats' player_info.id %}">Update Stats</a></button>
+                    </div>
+                  {% else %}
+                    <div class="col-md-2">
+                        <button class="compare-player"><a title="Click to Compare Player Stats" href="{% url 'compare' player_info.id %}">Compare Players</a></button>
+                    </div>
+                  {% endif %}
+                </div>
+              </span>                    
+            {% endfor %}
+          {% endif %}
+          <div class="row no-gutters">
+            <div class="col-md-12">
+              <p>&nbsp</p>
+            </div>
+          </div>
+        </div>
+        <div class="card mb-3">
+          <div class="row no-gutters">
+            <div class="col-md-12"><a href="{% url 'index' %}">Return to main page</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

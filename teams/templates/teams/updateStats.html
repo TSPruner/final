@@ -1,0 +1,631 @@
+{% extends "teams/base.html" %}
+{% load staticfiles %}
+
+{% block title %}
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+<script src="{% static 'teams/index.js' %}"></script>
+{% endblock %}
+
+{% block user %}
+    {% if user %}
+        <div id="user-name">{{ user }}</div>
+    {% endif %}
+{% endblock %}
+
+{% block header %}
+<table width="75%">
+  <tr>
+      <th id="indexTab" width="8%">
+        <a id="index" href="{% url 'index' %}" class="menu-link" data-page="index">Main</a>
+      </th>
+      <th id="viewPlayersTab" width="10%">
+        <a id="viewPlayers" href="{% url 'viewPlayers' %}" class="menu-link" data-page="viewPlayers">Players</a>
+      </th>
+      <th id="viewScheduleTab" width="14%">
+        <a id="viewSchedule" href="{% url 'viewSchedule' %}" class="menu-link" data-page="viewSchedule">View Schedule</a>
+      </th>
+      <th id="youarehere" width="12%">
+        <a id="youarehere" href="{% url 'viewNFLTeam' team_id %}" class="menu-link" data-page="viewNFLTeam">NFL Team</a>
+      </th>
+      <th id="gameTab" width="14%">
+        <a id="updateGame" href="{% url 'updateGame' %}" class="menu-link" data-page="updateGame">Update Game</a>
+      </th>
+      <th id="loginTab" width="9%">
+        <a id="login" href="{% url 'login' %}" class="menu-link" data-page="login">Login</a>
+      </th>
+      <th id="logoutTab" width="9%">
+        <a id="logout" href="{% url 'logout' %}"  class="menu-link" data-page="logout">Logout</a>
+      </th>
+  </tr>
+</table>
+{% endblock %}
+
+{% block body %}
+<div class="row no-gutters">
+  <div class="col-md-12" id="menubody">
+    <div id="main" width=100%>
+      <div class="callout" width="100%">
+        <p id="main-margin">&nbsp</p>
+        <div class="card">
+          {% if pick %}
+            {% if player_info %}
+              <div class="row no-gutters" class="title-row">
+                <div class="col-md-12">
+                  <h2>Update Player Stats</h2>
+                </div>
+              </div>
+              <form id="player-update" action="{% url 'updateStats' pick %}" method="post">
+                {% csrf_token %}
+                  <span class="player-row">
+                    {% if player_info.position == 8 %}
+                      <div class="row no-gutters">
+                        <div class="col-md-12">
+                          <h3>Player: {{ player_info.get_teamId_display }} - Defense</h3>
+                        </div>
+                      </div>
+                    {% else %}
+                      <div class="row no-gutters">
+                        <div class="col-md-12">
+                          <h3>Player: {{ player_info.firstName }} {{ player_info.lastName }} #{{ player_info.number }}</h3>
+                        </div>
+                      </div>
+                    {% endif %}
+                    <div class="row no-gutters">
+                      <div class="col-md-6">
+                        <p>Price $:</p>
+                      </div>
+                      <div class="col-md-6">
+                        <input type="number" name="price" value="{{ player_info.price }}" min="0" max="9999"  step=".01" required> 
+                      </div>
+                    </div>
+                    {% if player %}
+                      <div class="row no-gutters">
+                        <div class="col-md-6">
+                          <p>Projected Points:</p>
+                        </div>
+                        <div class="col-md-6">
+                          <input type="number" name="projPts" value="{{ player.projPts }}" min="0" max="9999"  step=".01" required> 
+                        </div>
+                      </div>
+                      <div class="row no-gutters">
+                        <div class="col-md-6">
+                          <p>Ranking:</p>
+                        </div>
+                        <div class="col-md-6">
+                          <input type="number" name="ranking" value="{{ player.ranking }}" min="0" max="9999" required> 
+                        </div>
+                      </div>
+                      {% if player_info.position == 8 %}
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Points Allowed:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="ptsAll" value="{{ player.ptsAll }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Sacks:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="sack" value="{{ player.sack }}" min="0" max="9999" step=".01" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Safeties:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="safe" value="{{ player.safe }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Interceptions:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="ints" value="{{ player.ints }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Fumbles Recovered:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="fumRec" value="{{ player.fumRec }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>TDs:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="TD" value="{{ player.TD }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Blocked Kicks:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="blkKick" value="{{ player.blkKick }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Return Yards:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="retnYds" value="{{ player.retnYds }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Return TDs:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="retnTD" value="{{ player.retnTD }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                      {% elif player_info.position == 7 %}
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Field Goals Made 0-19 Yds:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="under20" value="{{ player.under20 }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Field Goals Made 20-29 Yds:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="under30" value="{{ player.under30 }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Field Goals Made 30-39 Yds:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="under40" value="{{ player.under40 }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Field Goals Made 40-49 Yds:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="under50" value="{{ player.under50 }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Field Goals Made 50+ Yds:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="over50" value="{{ player.over50 }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>PAT Made:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="made" value="{{ player.made }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                      {% else %}
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Passing Yards:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="passYds" value="{{ player.passYds }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Passing TDs:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="passTD" value="{{ player.passTD }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Passing Ints:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="passInt" value="{{ player.passInt }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Rushing Atts:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="rushAtts" value="{{ player.rushAtts }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Rushing Yards:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="rushYds" value="{{ player.rushYds }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Rushing TDs:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="rushTD" value="{{ player.rushTD }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Receiving Tgt:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="recvTgt" value="{{ player.recvTgt }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Receiving Rec:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="recvRec" value="{{ player.recvRec }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Receiving Yards:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="recvYds" value="{{ player.recvYds }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Receiving TDs:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="recvTD" value="{{ player.recvTD }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Return Yards:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="retnYds" value="{{ player.retnYds }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Return TDs:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="retnTD" value="{{ player.retnTD }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>2 Pt:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="twoPT" value="{{ player.twoPT }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Fumble Tot:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="fumTot" value="{{ player.fumTot }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Fumble Lost:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="fumLost" value="{{ player.fumLost }}" min="0" max="9999" required> 
+                          </div>
+                        </div>
+                      {% endif %}
+                    {% else %}
+                      <div class="row no-gutters">
+                        <div class="col-md-6">
+                          <p>Projected Points:</p>
+                        </div>
+                        <div class="col-md-6">
+                          <input type="number" name="projPts" value=0 min="0" max="9999"  step=".01" required> 
+                        </div>
+                      </div>
+                      <div class="row no-gutters">
+                        <div class="col-md-6">
+                          <p>Rankings:</p>
+                        </div>
+                        <div class="col-md-6">
+                          <input type="number" name="ranking" value=0 min="0" max="9999" required> 
+                        </div>
+                      </div>
+                      {% if player_info.position == 8 %}
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Points Allowed:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="ptsAll" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Sacks:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="sack" value=0 min="0" max="9999" step=".01" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Safeties:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="safe" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Interceptions:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="ints" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Fumbles Recovered:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="fumRec" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>TDs:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="TD" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Blocked Kicks:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="blkKick" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Return Yards:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="retnYds" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Return TDs:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="retnTD" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                      {% elif player_info.position == 7 %}
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Field Goals Made 0-19 Yds:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="under20" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Field Goals Made 20-29 Yds:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="under30" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Field Goals Made 30-39 Yds:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="under40" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Field Goals Made 40-49 Yds:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="under50" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Field Goals Made 50+ Yds:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="over50" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>PAT Made:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="made" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                      {% else %}
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Passing Yards:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="passYds" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Passing TDs:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="passTD" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Passing Ints:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="passInt" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Rushing Atts:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="rushAtts" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Rushing Yards:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="rushYds" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Rushing TDs:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="rushTD" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Receiving Tgt:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="recvTgt" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Receiving Rec:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="recvRec" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Receiving Yards:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="recvYds" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Receiving TDs:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="recvTD" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Return Yards:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="retnYds" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Return TDs:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="retnTD" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>2 Pt:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="twoPT" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Fumble Tot:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="fumTot" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                        <div class="row no-gutters">
+                          <div class="col-md-6">
+                            <p>Fumble Lost:</p>
+                          </div>
+                          <div class="col-md-6">
+                            <input type="number" name="fumLost" value=0 min="0" max="9999" required> 
+                          </div>
+                        </div>
+                      {% endif %}
+                    {% endif %}
+                  </span>                    
+                  <div class="row no-gutters">
+                    <div class="col-md-6">
+                      <input class="submit-player" type="submit" value="Submit Updates"/>
+                    </div>
+                    <div class="col-md-6">
+                      <button class="view-player" required><a title="Go Back to View Player Details" href="{% url 'stats' player_info.id %}">Cancel (Back)</a></button>
+                    </div>
+                  </div>
+              </form>
+            {% endif %}
+          {% endif %}
+          <div class="row no-gutters">
+            <div class="col-md-12">
+              <p>&nbsp</p>
+            </div>
+          </div>
+        </div>
+        <div class="card mb-3">
+          <div class="row no-gutters">
+            <div class="col-md-12"><a href="{% url 'index' %}">Return to main page</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

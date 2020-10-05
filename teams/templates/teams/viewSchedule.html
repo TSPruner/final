@@ -1,0 +1,232 @@
+{% extends "teams/base.html" %}
+{% load staticfiles %}
+
+{% block title %}
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+<script src="{% static 'teams/index.js' %}"></script>
+{% endblock %}
+
+{% block user %}
+    {% if user %}
+        <div id="user-name">{{ user }}</div>
+    {% endif %}
+{% endblock %}
+
+{% block header %}
+<table width="75%">
+  <tr>
+      <th id="indexTab" width="8%">
+        <a id="index" href="{% url 'index' %}" class="menu-link" data-page="index">Main</a>
+      </th>
+      <th id="viewPlayersTab" width="10%">
+        <a id="viewPlayers" href="{% url 'viewPlayers' %}" class="menu-link" data-page="viewPlayers">Players</a>
+      </th>
+      <th id="youarehere" width="14%">
+        <a id="youarehere" href="{% url 'viewSchedule' %}" class="menu-link" data-page="viewSchedule">View Schedule</a>
+      </th>
+      {% if not admin %}
+        <th id="viewTeamTab" width="14%">
+          <a id="viewTeam" href="{% url 'viewTeam' team_id %}" class="menu-link" data-page="viewTeam">Fantasy Team</a>
+        </th>
+      {% else %}
+        <th id="viewTeamTab" width="12%">
+          <a id="viewTeam" href="{% url 'viewNFLTeam' team_id %}" class="menu-link" data-page="viewNFLTeam">NFL Team</a>
+        </th>
+      {% endif %}
+      {% if not admin %}
+        <th id="joinGameTab" width="12%">
+          <a id="joinGame" href="{% url 'submitTeam' %}" class="menu-link" data-page="submitTeam">Join Game</a>
+        </th>
+      {% else %}
+        <th id="gameTab" width="14%">
+          <a id="updateGame" href="{% url 'updateGame' %}" class="menu-link" data-page="updateGame">Update Game</a>
+        </th>
+      {% endif %}
+      <th id="loginTab" width="9%">
+        <a id="login" href="{% url 'login' %}" class="menu-link" data-page="login">Login</a>
+      </th>
+      <th id="logoutTab" width="9%">
+        <a id="logout" href="{% url 'logout' %}"  class="menu-link" data-page="logout">Logout</a>
+      </th>
+  </tr>
+</table>
+{% endblock %}
+
+{% block body %}
+<div class="row no-gutters">
+  <div class="col-md-12" id="menubody">
+    <div id="main" width=100%>
+      <div class="callout" width="100%">
+        <p id="main-margin">&nbsp</p>
+        <div class="card">
+          {% if schedule or schedule1 or schedule2 or schedule3 %}
+            {% if week == 0 %}
+              <div class="row no-gutters" class="title-row">
+                <div class="col-md-12">
+                  <h2>View Schedule</h2>
+                </div>
+              </div>
+              <div class="row no-gutters" class="title-row">
+                <div class="col-md-12">
+                  <h2>&nbsp</h2>
+                </div>
+              </div>
+              <form id="player-update" action="{% url 'viewSchedule' %}" method="post">
+                {% csrf_token %}
+                  <div class="row no-gutters">
+                    <div class="col-md-6">
+                      <select name="year" id="year" required>
+                        <option value=0>2019</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <select name="week" id="week" required>
+                          <option value=1>Week 1</option>
+                          <option value=2>Week 2</option>
+                          <option value=3>Week 3</option>
+                          <option value=4>Week 4</option>
+                          <option value=5>Week 5</option>
+                          <option value=6>Week 6</option>
+                          <option value=7>Week 7</option>
+                          <option value=8>Week 8</option>
+                          <option value=9>Week 9</option>
+                          <option value=10>Week 10</option>
+                          <option value=11>Week 11</option>
+                          <option value=12>Week 12</option>
+                          <option value=13>Week 13</option>
+                          <option value=14>Week 14</option>
+                          <option value=15>Week 15</option>
+                          <option value=16>Week 16</option>
+                          <option value=17>Week 17</option>
+                          <option value=18>Wild Card</option>
+                          <option value=19>Divisional</option>
+                          <option value=20>Conference</option>
+                          <option value=21>Super Bowl</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>&nbsp</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <input class="submit-player" type="submit" value="Week's Schedule"/>
+                    </div>
+                  </div>
+              </form>
+            {% else %}
+              {% for index in days %}
+                {% if forloop.first %}
+                  <div class="row no-gutters" class="title-row">
+                    <div class="col-md-12">
+                      <h2>Week: {{ week }}</h2>
+                    </div>
+                  </div>
+                {% endif %}
+                {% if index == 0 %}
+                  {% for game in schedule %}
+                    {% if forloop.first %}
+                      <div class="row no-gutters" class="title-row">
+                        <div class="col-md-12">
+                          <h4>{{ game.get_day_display }}, {{ game.get_month_display }} {{ game.date }} Matchups</h4>
+                        </div>
+                      </div>
+                    {% endif %}
+                    <div class="row no-gutters">
+                      <div class="col-md-9">
+                        <p class="game-row">{{ game.get_awayTeam_display }} at {{ game.get_homeTeam_display }}</p>
+                      </div>
+                      {% if admin %}
+                        <div class="col-md-3">
+                          <button class="update-player"><a title="Click to Update Game" href="{% url 'updateSchedule' game.id %}">Update Game</a></button>
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% endfor %}  
+                {% elif index == 1 %}       
+                  {% for game in schedule1 %}
+                    {% if forloop.first %}
+                      <div class="row no-gutters" class="title-row">
+                        <div class="col-md-12">
+                          <h4>{{ game.get_day_display }}, {{ game.get_month_display }} {{ game.date }} Matchups</h4>
+                        </div>
+                      </div>
+                    {% endif %}
+                    <div class="row no-gutters">
+                      <div class="col-md-9">
+                        <p class="game-row">{{ game.get_awayTeam_display }} at {{ game.get_homeTeam_display }}</p>
+                      </div>
+                      {% if admin %}
+                        <div class="col-md-3">
+                          <button class="update-player"><a title="Click to Update Game" href="{% url 'updateSchedule' game.id %}">Update Game</a></button>
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% endfor %}        
+                {% elif index == 2 %}       
+                  {% for game in schedule2 %}
+                    {% if forloop.first %}
+                      <div class="row no-gutters" class="title-row">
+                        <div class="col-md-12">
+                          <h4>{{ game.get_day_display }}, {{ game.get_month_display }} {{ game.date }} Matchups</h4>
+                        </div>
+                      </div>
+                    {% endif %}
+                    <div class="row no-gutters">
+                      <div class="col-md-9">
+                        <p class="game-row">{{ game.get_awayTeam_display }} at {{ game.get_homeTeam_display }}</p>
+                      </div>
+                      {% if admin %}
+                        <div class="col-md-3">
+                          <button class="update-player"><a title="Click to Update Game" href="{% url 'updateSchedule' game.id %}">Update Game</a></button>
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% endfor %}    
+                {% elif index == 3 %}    
+                  {% for game in schedule3 %}
+                    {% if forloop.first %}
+                      <div class="row no-gutters" class="title-row">
+                        <div class="col-md-12">
+                          <h4>{{ game.get_day_display }}, {{ game.get_month_display }} {{ game.date }} Matchups</h4>
+                        </div>
+                      </div>
+                    {% endif %}
+                    <div class="row no-gutters">
+                      <div class="col-md-9">
+                        <p class="game-row">{{ game.get_awayTeam_display }} at {{ game.get_homeTeam_display }}</p>
+                      </div>
+                      {% if admin %}
+                        <div class="col-md-3">
+                          <button class="update-player"><a title="Click to Update Game" href="{% url 'updateSchedule' game.id %}">Update Game</a></button>
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% endfor %}   
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+            <div class="row no-gutters">
+              <div class="col-md-12">
+                <p>&nbsp</p>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+        <div class="card mb-3">
+          <div class="row no-gutters">
+            {% if week == 0 %}
+              <div class="col-md-12"><a href="{% url 'index' %}">Return to main page</a></div>
+            {% else %}
+              <div class="col-md-6"><a href="{% url 'index' %}">Return to main page</a></div>
+              <div class="col-md-6"><a href="{% url 'viewSchedule' %}">Go back to view schedule selctions (cancel)</a></div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

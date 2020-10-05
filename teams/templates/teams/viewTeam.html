@@ -1,0 +1,903 @@
+{% extends "teams/base.html" %}
+{% load staticfiles %}
+
+{% block title %}
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+<script src="{% static 'teams/index.js' %}"></script>
+{% endblock %}
+
+{% block user %}
+    {% if user %}
+        <div id="user-name">{{ user }}</div>
+    {% endif %}
+{% endblock %}
+
+{% block header %}
+<table width="75%">
+  <tr>
+      <th id="indexTab" width="8%">
+        <a id="index" href="{% url 'index' %}" class="menu-link" data-page="index">Main</a>
+      </th>
+      <th id="viewPlayersTab" width="10%">
+        <a id="viewPlayers" href="{% url 'viewPlayers' %}" class="menu-link" data-page="viewPlayers">Players</a>
+      </th>
+      <th id="viewScheduleTab" width="14%">
+        <a id="viewSchedule" href="{% url 'viewSchedule' %}" class="menu-link" data-page="viewSchedule">View Schedule</a>
+      </th>
+      <th id="youarehere" width="14%">
+        <a id="youarehere" href="{% url 'viewTeam' team_id %}" class="menu-link" data-page="viewTeam">Fantasy Team</a>
+      </th>
+      {% if admin_user %}
+        <th id="gameTab" width="14%">
+          <a id="updateGame" href="{% url 'updateGame' %}" class="menu-link" data-page="updateGame">Update Game</a>
+        </th>
+      {% else %}
+        <th id="joinGameTab" width="12%">
+          <a id="joinGame" href="{% url 'submitTeam' %}" class="menu-link" data-page="submitTeam">Join Game</a>
+        </th>
+      {% endif %}
+      <th id="loginTab" width="9%">
+        <a id="login" href="{% url 'login' %}" class="menu-link" data-page="login">Login</a>
+      </th>
+      <th id="logoutTab" width="9%">
+        <a id="logout" href="{% url 'logout' %}"  class="menu-link" data-page="logout">Logout</a>
+      </th>
+  </tr>
+</table>
+{% endblock %}
+
+{% block body %}
+<div class="row no-gutters">
+  <div class="col-md-12" id="menubody">
+    <div id="main" width=100%>
+      <div class="callout" width="100%">
+        <p id="main-margin">&nbsp</p>
+        <div class="card">
+          {% if ranking is not None %}
+            <div class="row no-gutters" class="title-row">
+              <div class="col-md-12">
+                <h2>Roster for fantasy team {{ team_id }} - Ranked #{{ ranking }}</h2>
+              </div>
+            </div>
+          {% else %}
+            <div class="row no-gutters" class="title-row">
+              <div class="col-md-12">
+                <h2>Roster for fantasy team {{ team_id }} - $13,000 cap</h2>
+              </div>
+            </div>
+          {% endif %}
+          {% if game %}
+            {% if QB_player %}
+              <div class="row no-gutters" class="player-row">
+                <div class="col-md-10">
+                  <ul id="pos-selections" style="list-style-type:none">
+                      <li id="pos-title">Position QB: {{ QB_player.positionDesc }} ${{ QB_player.price }}</li>
+                  </ul>
+                </div>
+                {% if QB_player.status >= 3 %}
+                  <div class="col-md-2">
+                    <ul id="pos-selections" style="list-style-type:none">
+                        <li id="pos-ranking">Pts:{{ QB_player.pts }}</li>
+                    </ul>
+                  </div>
+                {% else %}
+                  {% if count and not other_team %}
+                    <div class="col-md-1">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li>&nbsp</li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <button class="update-player"><a href="{% url 'selectPick' 0 %}">Change</a></button>
+                    </div>
+                  {% endif %}
+                {% endif %}
+              </div>
+            {% else %}
+              <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+                {% csrf_token %}
+                  <div class="row no-gutters" class="player-row">
+                    <div class="col-md-9">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li id="0"> 
+                          <select name="player" id="player0" required style="width:550px;">
+                            <option value=0>Please Select player for QB position</option>
+                            {% for selection in QB_players %}
+                              <option value="{{ selection.id }}">
+                                {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <input type="hidden" name="pos" id="pos" value="0">
+                    </div>
+                    <div class="col-md-2">
+                      <input class="add-player" type="submit" value="Add Player"/>
+                    </div>
+                  </div>
+              </form>
+            {% endif %}
+            {% if RB1_player %}
+              <div class="row no-gutters" class="player-row">
+                <div class="col-md-10">
+                  <ul id="pos-selections" style="list-style-type:none">
+                    <li id="pos-title">Position RB1: {{ RB1_player.positionDesc }} ${{ RB1_player.price }}</li>
+                  </ul>
+                </div>
+                {% if RB1_player.status >= 3 %}
+                <div class="col-md-2">
+                  <ul id="pos-selections" style="list-style-type:none">
+                      <li id="pos-ranking">Pts:{{ RB1_player.pts }}</li>
+                  </ul>
+                </div>
+                {% else %}
+                  {% if count and not other_team %}
+                    <div class="col-md-1">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li>&nbsp</li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <button class="update-player"><a href="{% url 'selectPick' 1 %}">Change</a></button>
+                    </div>
+                  {% endif %}
+                {% endif %}
+              </div>
+            {% else %}
+              <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+                {% csrf_token %}
+                  <div class="row no-gutters" class="player-row">
+                    <div class="col-md-9">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li id="1"> 
+                          <select name="player" id="player1" required style="width:550px;">
+                              <option value=0>Please Select player for RB1 position</option>
+                              {% for selection in RB_players %}
+                                <option value="{{ selection.id }}">
+                                    {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                                </option>
+                              {% endfor %}
+                              {% for selection in FB_players %}
+                                <option value="{{ selection.id }}">
+                                  {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                                </option>
+                              {% endfor %}
+                          </select>
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <input type="hidden" name="pos" id="pos" value="1">
+                    </div>
+                    <div class="col-md-2">
+                      <input class="add-player" type="submit" value="Add Player"/>
+                    </div>
+                  </div>
+              </form>
+            {% endif %}
+            {% if RB2_player %}
+              <div class="row no-gutters" class="player-row">
+                <div class="col-md-10">
+                  <ul id="pos-selections" style="list-style-type:none">
+                    <li id="pos-title">Position RB2: {{ RB2_player.positionDesc }} ${{ RB2_player.price }}</li>
+                  </ul>
+                </div>
+                {% if RB2_player.status >= 3 %}
+                <div class="col-md-2">
+                  <ul id="pos-selections" style="list-style-type:none">
+                      <li id="pos-ranking">Pts:{{ RB2_player.pts }}</li>
+                  </ul>
+                </div>
+                {% else %}
+                  {% if count and not other_team %}
+                    <div class="col-md-1">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li>&nbsp</li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <button class="update-player"><a href="{% url 'selectPick' 2 %}">Change</a></button>
+                    </div>
+                  {% endif %}
+                {% endif %}
+              </div>
+            {% else %}
+              <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+                {% csrf_token %}
+                  <div class="row no-gutters" class="player-row">
+                    <div class="col-md-9">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li id="2"> 
+                          <select name="player" id="player2" required style="width:550px;">
+                            <option value=0>Please Select player for RB2 position</option>
+                            {% for selection in RB_players %}
+                              <option value="{{ selection.id }}">
+                                  {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                              </option>
+                            {% endfor %}
+                            {% for selection in FB_players %}
+                              <option value="{{ selection.id }}">
+                                {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <input type="hidden" name="pos" id="pos" value="2">
+                    </div>
+                    <div class="col-md-2">
+                      <input class="add-player" type="submit" value="Add Player"/>
+                    </div>
+                  </div>
+              </form>
+            {% endif %}
+            {% if WR1_player %}
+              <div class="row no-gutters" class="player-row">
+                <div class="col-md-10">
+                  <ul id="pos-selections" style="list-style-type:none">
+                    <li id="pos-title">Position WR1: {{ WR1_player.positionDesc }} ${{ WR1_player.price }}</li>
+                  </ul>
+                </div>
+                {% if WR1_player.status >= 3 %}
+                <div class="col-md-2">
+                  <ul id="pos-selections" style="list-style-type:none">
+                      <li id="pos-ranking">Pts:{{ WR1_player.pts }}</li>
+                  </ul>
+                </div>
+                {% else %}
+                  {% if count and not other_team %}
+                    <div class="col-md-1">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li>&nbsp</li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <button class="update-player"><a href="{% url 'selectPick' 3 %}">Change</a></button>
+                    </div>
+                  {% endif %}
+                {% endif %}
+              </div>
+            {% else %}
+              <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+                {% csrf_token %}
+                  <div class="row no-gutters" class="player-row">
+                    <div class="col-md-9">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li id="3"> 
+                          <select name="player" id="player3" required style="width:550px;">
+                            <option value=0>Please Select player for WR1 position</option>
+                            {% for selection in WR_players %}
+                              <option value="{{ selection.id }}">
+                                  {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <input class="form-check-input" type="hidden" name="pos" id="pos" value="3">
+                    </div>
+                    <div class="col-md-2">
+                      <input class="add-player" type="submit" value="Add Player"/>
+                    </div>
+                  </div>
+              </form>
+            {% endif %}
+            {% if WR2_player %}
+              <div class="row no-gutters" class="player-row">
+                <div class="col-md-10">
+                  <ul id="pos-selections" style="list-style-type:none">
+                    <li id="pos-title">Position WR2: {{ WR2_player.positionDesc }} ${{ WR2_player.price }}</li>
+                  </ul>
+                </div>
+                {% if WR2_player.status >= 3 %}
+                <div class="col-md-2">
+                  <ul id="pos-selections" style="list-style-type:none">
+                      <li id="pos-ranking">Pts:{{ WR2_player.pts }}</li>
+                  </ul>
+                </div>
+                {% else %}
+                  {% if count and not other_team %}
+                    <div class="col-md-1">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li>&nbsp</li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <button class="update-player"><a href="{% url 'selectPick' 4 %}">Change</a></button>
+                    </div>
+                  {% endif %}
+                {% endif %}
+              </div>
+            {% else %}
+              <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+                {% csrf_token %}
+                  <div class="row no-gutters" class="player-row">
+                    <div class="col-md-9">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li id="4"> 
+                          <select name="player" id="player4" required style="width:550px;">
+                            <option value=0>Please Select player for WR2 position</option>
+                            {% for selection in WR_players %}
+                              <option value="{{ selection.id }}">
+                                  {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <input type="hidden" name="pos" id="pos" value="4">
+                    </div>
+                    <div class="col-md-2">
+                      <input class="add-player" type="submit" value="Add Player"/>
+                    </div>
+                  </div>
+              </form>
+            {% endif %}
+            {% if TE_player %}
+              <div class="row no-gutters" class="player-row">
+                <div class="col-md-10">
+                  <ul id="pos-selections" style="list-style-type:none">
+                    <li id="pos-title">Position TE: {{ TE_player.positionDesc }} ${{ TE_player.price }}</li>
+                  </ul>
+                </div>
+                {% if TE_player.status >= 3 %}
+                <div class="col-md-2">
+                  <ul id="pos-selections" style="list-style-type:none">
+                      <li id="pos-ranking">Pts:{{ TE_player.pts }}</li>
+                  </ul>
+                </div>
+                {% else %}
+                  {% if count and not other_team %}
+                    <div class="col-md-1">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li>&nbsp</li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <button class="update-player"><a href="{% url 'selectPick' 5 %}">Change</a></button>
+                    </div>
+                  {% endif %}
+                {% endif %}
+              </div>
+            {% else %}
+              <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+                {% csrf_token %}
+                  <div class="row no-gutters" class="player-row">
+                    <div class="col-md-9">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li id="5"> 
+                          <select name="player" id="player5" required style="width:550px;">
+                            <option value=0>Please Select player for TE position</option>
+                            {% for selection in TE_players %}
+                              <option value="{{ selection.id }}">
+                                  {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <input type="hidden" name="pos" id="pos" value="5">
+                    </div>
+                    <div class="col-md-2">
+                      <input class="add-player" type="submit" value="Add Player"/>
+                    </div>
+                  </div>
+              </form>
+            {% endif %}
+            {% if DEF_player %}
+              <div class="row no-gutters" class="player-row">
+                <div class="col-md-10">
+                  <ul id="pos-selections" style="list-style-type:none">
+                    <li id="pos-title">Position DEF: {{ DEF_player.positionDesc }} ${{ DEF_player.price }}</li>
+                  </ul>
+                </div>
+                {% if DEF_player.status >= 3 %}
+                <div class="col-md-2">
+                  <ul id="pos-selections" style="list-style-type:none">
+                      <li id="pos-ranking">Pts:{{ DEF_player.pts }}</li>
+                  </ul>
+                </div>
+                {% else %}
+                  {% if count and not other_team %}
+                    <div class="col-md-1">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li>&nbsp</li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <button class="update-player"><a href="{% url 'selectPick' 6 %}">Change</a></button>
+                    </div>
+                  {% endif %}
+                {% endif %}
+              </div>
+            {% else %}
+              <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+                {% csrf_token %}
+                  <div class="row no-gutters" class="player-row">
+                    <div class="col-md-9">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li id="6"> 
+                          <select name="player" id="player6" required style="width:550px;">
+                            <option value=0>Please Select defense for DEF position</option>
+                            {% for selection in DEF_players %}
+                              <option value="{{ selection.id }}">
+                                  {{ selection.get_teamId_display }} -  ${{ selection.price }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <input type="hidden" name="pos" id="pos" value="6">
+                    </div>
+                    <div class="col-md-2">
+                      <input class="add-player" type="submit" value="Add Player"/>
+                    </div>
+                  </div>
+              </form>
+            {% endif %}
+            {% if FLEX_player %}
+              <div class="row no-gutters" class="player-row">
+                <div class="col-md-10">
+                  <ul id="pos-selections" style="list-style-type:none">
+                    <li id="pos-title">Position FLEX: {{ FLEX_player.positionDesc }} ${{ FLEX_player.price }}</li>
+                  </ul>
+                </div>
+                {% if FLEX_player.status >= 3 %}
+                <div class="col-md-2">
+                  <ul id="pos-selections" style="list-style-type:none">
+                      <li id="pos-ranking">Pts:{{ FLEX_player.pts }}</li>
+                  </ul>
+                </div>
+                {% else %}
+                  {% if count and not other_team %}
+                    <div class="col-md-1">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li>&nbsp</li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <button class="update-player"><a href="{% url 'selectPick' 7 %}">Change</a></button>
+                    </div>
+                  {% endif %}
+                {% endif %}
+              </div>
+            {% else %}
+              <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+                {% csrf_token %}
+                  <div class="row no-gutters" class="player-row">
+                    <div class="col-md-9">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li id="7"> 
+                          <select name="player" id="player7" required style="width:550px;">
+                            <option value=0>Please Select player for FLEX position</option>
+                            {% for selection in QB_players %}
+                              <option value="{{ selection.id }}">
+                                  {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                              </option>
+                            {% endfor %}
+                            {% for selection in RB_players %}
+                              <option value="{{ selection.id }}">
+                                  {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                              </option>
+                            {% endfor %}
+                            {% for selection in FB_players %}
+                              <option value="{{ selection.id }}">
+                                {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                              </option>
+                            {% endfor %}
+                            {% for selection in TE_players %}
+                              <option value="{{ selection.id }}">
+                                {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                              </option>
+                            {% endfor %}
+                            {% for selection in K_players %}
+                              <option value="{{ selection.id }}">
+                                {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <input class="form-check-input" type="hidden" name="pos" id="pos" value="7">
+                    </div>
+                    <div class="col-md-2">
+                      <input class="add-player" type="submit" value="Add Player"/>
+                    </div>
+                  </div>
+              </form>
+            {% endif %}
+            {% if K_player %}
+              <div class="row no-gutters" class="player-row">
+                <div class="col-md-10">
+                  <ul id="pos-selections" style="list-style-type:none">
+                    <li id="pos-title">Position K: {{ K_player.positionDesc }} ${{ K_player.price }}</li>
+                  </ul>
+                </div>
+                {% if K_player.status >= 3 %}
+                <div class="col-md-2">
+                  <ul id="pos-selections" style="list-style-type:none">
+                      <li id="pos-ranking">Pts:{{ K_player.pts }}</li>
+                  </ul>
+                </div>
+                {% else %}
+                  {% if count and not other_team %}
+                    <div class="col-md-1">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li>&nbsp</li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <button class="update-player"><a href="{% url 'selectPick' 8 %}">Change</a></button>
+                    </div>
+                  {% endif %}
+                {% endif %}
+              </div>
+            {% else %}
+              <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+                {% csrf_token %}
+                  <div class="row no-gutters" class="player-row">
+                    <div class="col-md-9">
+                      <ul id="pos-selections" style="list-style-type:none">
+                        <li id="8"> 
+                          <select name="player" id="player8" required style="width:550px;">
+                            <option value=0>Please Select player for K position</option>
+                            {% for selection in K_players %}
+                              <option value="{{ selection.id }}">
+                                {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                              </option>
+                            {% endfor %}
+                          </select>
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="col-md-1">
+                      <input type="hidden" name="pos" id="pos" value="8">
+                    </div>
+                    <div class="col-md-2">
+                      <input class="add-player" type="submit" value="Add Player"/>
+                    </div>
+                  </div>
+              </form>
+            {% endif %}
+            <div class="row no-gutters" class="title-row">
+              <div class="col-md-12">
+                <p>&nbsp</p>
+              </div>
+            </div>
+            <div class="row no-gutters" class="title-row">
+              <div class="col-md-4">
+                <p>&nbsp</p>
+              </div>
+              {% if other_team %}
+                {% if count == 0 %}
+                  <div class="col-md-4"><a href="{% url 'viewTeam' other_team %}">Create new fantasy team</a></div>
+                {% else %}
+                  <div class="col-md-4"><a href="{% url 'viewTeam' other_team %}">Add players to fantasy team in progress</a></div>
+                {% endif %}
+              {% elif count %}
+                {% if count == 1 %}
+                  <div class="col-md-4">
+                    <p class="total-desc">Team Total: ${{ total|floatformat:2 }} with {{ count }} player</p>
+                  </div>
+                {% else %}
+                  <div class="col-md-4">
+                    <p class="total-desc">Team Total: 
+                      {% if QB_player.status >= 3 %}
+                        {{ total }} for {{ count }} players active</p>
+                      {% else %}
+                        ${{ total|floatformat:2 }} with {{ count }} players</p>
+                      {% endif %}
+                  </div>
+                {% endif %}
+              {% endif %}
+              <div class="col-md-4">
+                <p>&nbsp</p>
+              </div>
+            </div>
+          {% else %}
+            <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+              {% csrf_token %}
+                <div class="row no-gutters" class="player-row">
+                  <div class="col-md-9">
+                    <ul id="pos-selections" style="list-style-type:none">
+                      <li id="0"> 
+                        <select name="player" id="player0" required style="width:550px;">
+                          <option value=0>Please Select player for QB position</option>
+                          {% for selection in QB_players %}
+                            <option value="{{ selection.id }}">
+                              {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="col-md-1">
+                    <input type="hidden" name="pos" id="pos" value="0">
+                  </div>
+                  <div class="col-md-2">
+                    <input class="submit-player" type="submit" value="Add Player"/>
+                  </div>
+                </div>  
+            </form>
+            <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+              {% csrf_token %}
+                <div class="row no-gutters" class="player-row">
+                  <div class="col-md-9">
+                    <ul id="pos-selections" style="list-style-type:none">
+                      <li id="1"> 
+                        <select name="player1" id="player1" required style="width:550px;">
+                          <option value=0>Please Select player for RB1 position</option>
+                          {% for selection in RB_players %}
+                            <option value="{{ selection.id }}">
+                              {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                            </option>
+                          {% endfor %}
+                          {% for selection in FB_players %}
+                            <option value="{{ selection.id }}">
+                              {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="col-md-1">
+                    <input type="hidden" name="pos" id="pos" value="1">
+                  </div>
+                  <div class="col-md-2">
+                    <input class="submit-player" type="submit" value="Add Player"/>
+                  </div>
+                </div>
+            </form>
+            <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+              {% csrf_token %}
+                <div class="row no-gutters" class="player-row">
+                  <div class="col-md-9">
+                    <ul id="pos-selections" style="list-style-type:none">
+                      <li id="2"> 
+                        <select name="player" id="player2" required style="width:550px;">
+                          <option value=0>Please Select player for RB2 position</option>
+                          {% for selection in RB_players %}
+                            <option value="{{ selection.id }}">
+                                {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                            </option>
+                          {% endfor %}
+                          {% for selection in FB_players %}
+                            <option value="{{ selection.id }}">
+                              {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="col-md-1">
+                    <input type="hidden" name="pos" id="pos" value="2">
+                  </div>
+                  <div class="col-md-2">
+                    <input class="submit-player" type="submit" value="Add Player"/>
+                  </div>
+                </div>
+            </form>
+            <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+              {% csrf_token %}
+                <div class="row no-gutters" class="player-row">
+                  <div class="col-md-9">
+                    <ul id="pos-selections" style="list-style-type:none">
+                      <li id="3"> 
+                        <select name="player" id="player3" required style="width:550px;">
+                          <option value=0>Please Select player for WR1 position</option>
+                          {% for selection in WR_players %}
+                            <option value="{{ selection.id }}">
+                                {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="col-md-1">
+                    <input type="hidden" name="pos" id="pos" value="3">
+                  </div>
+                  <div class="col-md-2">
+                    <input class="submit-player" type="submit" value="Add Player"/>
+                  </div>
+                </div>
+            </form>
+            <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+              {% csrf_token %}
+                <div class="row no-gutters" class="player-row">
+                  <div class="col-md-9">
+                    <ul id="pos-selections" style="list-style-type:none">
+                      <li id="4"> 
+                        <select name="player" id="player4" required style="width:550px;">
+                          <option value=0>Please Select player for WR2 position</option>
+                          {% for selection in WR_players %}
+                            <option value="{{ selection.id }}">
+                                {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="col-md-1">
+                    <input type="hidden" name="pos" id="pos" value="4">
+                  </div>
+                  <div class="col-md-2">
+                    <input class="submit-player" type="submit" value="Add Player"/>
+                  </div>
+                </div>
+            </form>
+            <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+              {% csrf_token %}
+                <div class="row no-gutters" class="player-row">
+                  <div class="col-md-9">
+                    <ul id="pos-selections" style="list-style-type:none">
+                      <li id="5"> 
+                        <select name="player" id="player5" required style="width:550px;">
+                          <option value=0>Please Select player for TE position</option>
+                          {% for selection in TE_players %}
+                            <option value="{{ selection.id }}">
+                                {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="col-md-1">
+                    <input type="hidden" name="pos" id="pos" value="5">
+                  </div>
+                  <div class="col-md-2">
+                    <input class="submit-player" type="submit" value="Add Player"/>
+                  </div>
+                </div>
+            </form>
+            <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+              {% csrf_token %}
+                <div class="row no-gutters" class="player-row">
+                  <div class="col-md-9">
+                    <ul id="pos-selections" style="list-style-type:none">
+                      <li id="6"> 
+                        <select name="player" id="player6" required style="width:550px;">
+                          <option value=0>Please Select defense for DEF position</option>
+                          {% for selection in DEF_players %}
+                            <option value="{{ selection.id }}">
+                                {{ selection.get_teamId_display }}  ${{ selection.price }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="col-md-1">
+                    <input type="hidden" name="pos" id="pos" value="6">
+                  </div>
+                  <div class="col-md-2">
+                    <input class="submit-player" type="submit" value="Add Player"/>
+                  </div>
+                </div>
+            </form>
+            <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+              {% csrf_token %}
+                <div class="row no-gutters" class="player-row">
+                  <div class="col-md-9">
+                    <ul id="pos-selections" style="list-style-type:none">
+                      <li id="7"> 
+                        <select name="player" id="player7" required style="width:550px;">
+                          <option value=0>Please Select player for FLEX position</option>
+                          {% for selection in QB_players %}
+                            <option value="{{ selection.id }}">
+                                {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                            </option>
+                          {% endfor %}
+                          {% for selection in RB_players %}
+                            <option value="{{ selection.id }}">
+                                {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                            </option>
+                          {% endfor %}
+                          {% for selection in FB_players %}
+                            <option value="{{ selection.id }}">
+                              {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                            </option>
+                          {% endfor %}
+                          {% for selection in TE_players %}
+                            <option value="{{ selection.id }}">
+                              {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                            </option>
+                          {% endfor %}
+                          {% for selection in K_players %}
+                            <option value="{{ selection.id }}">
+                              {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="col-md-1">
+                    <input type="hidden" name="pos" id="pos" value="7">
+                  </div>
+                  <div class="col-md-2">
+                    <input class="submit-player" type="submit" value="Add Player"/>
+                  </div>
+                </div>
+            </form>
+            <form id="player-update" action="{% url 'viewTeam' team_id %}" method="post">
+              {% csrf_token %}
+                <div class="row no-gutters" class="player-row">
+                  <div class="col-md-9">
+                    <ul id="pos-selections" style="list-style-type:none">
+                      <li id="8"> 
+                        <select name="player" id="player8" required style="width:550px;">
+                          <option value=0>Please Select player for K position</option>
+                          {% for selection in K_players %}
+                            <option value="{{ selection.id }}">
+                              {{ selection.firstName }} {{ selection.lastName }} #{{ selection.number }} w/{{ selection.get_teamId_display }}  ${{ selection.price }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="col-md-1">
+                    <input type="hidden" name="pos" id="pos" value="8">
+                  </div>
+                  <div class="col-md-2">
+                    <input class="submit-player" type="submit" value="Add Player"/>
+                  </div>
+                </div>  
+            </form> 
+            <div class="row no-gutters" class="title-row">
+              <div class="col-md-4">
+                <p>&nbsp</p>
+              </div>
+              <div class="col-md-4">
+                {% if count == 1 %}
+                  <p class="total-desc">Team Total: ${{ total|floatformat:2 }} with {{ count }} player</p>
+                {% else %}
+                  <p class="total-desc">Team Total: ${{ total|floatformat:2 }} with {{ count }} players</p>
+                {% endif %}
+              </div>
+              <div class="col-md-4">
+                <p>&nbsp</p>
+              </div>
+            </div>
+          {% endif %}
+          <div class="row no-gutters">
+            <div class="col-md-12">
+              <p>&nbsp</p>
+            </div>
+          </div>
+        </div>
+        <div class="card mb-3">
+          <div class="row no-gutters">
+            <div class="col-md-6"><a href="{% url 'index' %}">Return to main page</a></div>
+            <div class="col-md-6"><a href="{% url 'viewPlayers' %}">Go to Players page</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2" class="white">
+    <p id="whitespace">&nbsp</p>
+  </div>
+</div>
+{% endblock %}

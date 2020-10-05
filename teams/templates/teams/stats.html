@@ -1,0 +1,295 @@
+{% extends "teams/base.html" %}
+{% load staticfiles %}
+
+{% block title %}
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+<script src="{% static 'teams/index.js' %}"></script>
+{% endblock %}
+
+{% block user %}
+    {% if user %}
+        <div id="user-name">{{ user }}</div>
+    {% endif %}
+{% endblock %}
+
+{% block header %}
+<table width="75%">
+    <tr>
+        <th id="indexTab" width="8%">
+          <a id="index" href="{% url 'index' %}" class="menu-link" data-page="index">Main</a>
+        </th>
+        <th id="viewPlayersTab" width="10%">
+          <a id="viewPlayers" href="{% url 'viewPlayers' %}" class="menu-link" data-page="viewPlayers">Players</a>
+        </th>
+        <th id="viewScheduleTab" width="14%">
+          <a id="viewSchedule" href="{% url 'viewSchedule' %}" class="menu-link" data-page="viewSchedule">View Schedule</a>
+        </th>
+        <th id="youarehere" width="12%">
+          <a id="youarehere" href="{% url 'viewNFLTeam' team_id %}" class="menu-link" data-page="viewNFLTeam">NFL Team</a>
+        </th>
+        <th id="gameTab" width="14%">
+          <a id="updateGame" href="{% url 'updateGame' %}" class="menu-link" data-page="updateGame">Update Game</a>
+        </th>
+        <th id="loginTab" width="9%">
+          <a id="login" href="{% url 'login' %}" class="menu-link" data-page="login">Login</a>
+        </th>
+        <th id="logoutTab" width="9%">
+          <a id="logout" href="{% url 'logout' %}"  class="menu-link" data-page="logout">Logout</a>
+        </th>
+    </tr>
+</table>
+{% endblock %}
+
+{% block body %}
+<div class="row no-gutters">
+  <div class="col-md-12" id="menubody">
+    <div id="main" width=100%>
+      <div class="callout" width="100%">
+        <p id="main-margin">&nbsp</p>
+        <div class="card">
+          {% if pick %}
+            {% if player_info %}
+              <div class="row no-gutters" class="title-row">
+                <div class="col-md-12">
+                  <h2>View Player Info and Stats</h2>
+                </div>
+              </div>
+              {% if player_info.position == 8 %}
+                <div class="row no-gutters">
+                  <div class="col-md-12">
+                    <h3>Player: {{ player_info.get_teamId_display }} - Defense</h3>
+                  </div>
+                </div>
+                <div class="row no-gutters">
+                  <div class="col-md-12">
+                    <p>Price: ${{ player_info.price }}</p>
+                  </div>
+                </div>
+              {% else %}
+                <div class="row no-gutters">
+                  <div class="col-md-12">
+                    <h3>Player: {{ player_info.firstName }} {{ player_info.lastName }} #{{ player_info.number }}</h3>
+                  </div>
+                </div>
+                <div class="row no-gutters">
+                  <div class="col-md-6">
+                    <p>Position: {{ player_info.get_position_display }}</p>
+                  </div>
+                  <div class="col-md-6">
+                    <p>Price: ${{ player_info.price }}</p>
+                  </div>
+                </div>
+              {% endif %}
+              {% if player %}
+                <div class="row no-gutters">
+                  <div class="col-md-12">
+                    <p>Projected Points: {{ player.projPts }}</p>
+                  </div>
+                </div>
+                <div class="row no-gutters">
+                  <div class="col-md-12">
+                    <p>Ranking: {{ player.ranking }}</p>
+                  </div>
+                </div>
+                {% if player_info.position == 8 %}
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Points Allowed: {{ player.sack }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Safeties: {{ player.safe }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Interceptions: {{ player.ints }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Fumbles Rec: {{ player.fumRec }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>TDs: {{ player.TD }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Blocked Kicks: {{ player.blkKick }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Return Yards: {{ player.retnYds }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Return TDs: {{ player.retnTD }}</p>
+                    </div>
+                  </div>
+                {% elif player_info.position == 7 %}
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>FG Made 0-19 Yds: {{ player.under20 }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>FG Made 20-29 Yds: {{ player.under30 }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>FG Made 30-39 Yds: {{ player.under40 }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>FG Made 40-49 Yds: {{ player.under50 }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>FG Made 50+ Yds: {{ player.over50 }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>PAT Made: {{ player.made }}</p>
+                    </div>
+                  </div>
+                {% else %}
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Passing Yards: {{ player.passYds }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Passing TDs: {{ player.passTD }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Passing Interceptions: {{ player.passInt }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Rushing Attempts: {{ player.rushAtts }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Rushing Yards: {{ player.rushYds }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Rushing TDs: {{ player.rushTD }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Receiving Yards: {{ player.recvYds }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Receiving TDs: {{ player.recvTD }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Receiving Targets: {{ player.recvTgt }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Receiving Receptions: {{ player.recvRec }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Return Yards: {{ player.retnYds }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Return TDs: {{ player.retnTD }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>2 Pt Conversions: {{ player.twoPT }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Fumble Totals: {{ player.fumTot }}</p>
+                    </div>
+                  </div>
+                  <div class="row no-gutters">
+                    <div class="col-md-12">
+                      <p>Fumbles Lost: {{ player.fumLost }}</p>
+                    </div>
+                  </div>
+                {% endif %}
+              {% else %}
+                <div class="row no-gutters">
+                  <div class="col-md-12">
+                    <p>No stats available at this time</p>
+                  </div>
+                </div>
+              {% endif %}    
+              <div class="row no-gutters">
+                <div class="col-md-12">
+                  <p>&nbsp</p>
+                </div>
+              </div>            
+              <div class="row no-gutters" class="title-row">
+                {% if player_info.position != 8 %}
+                  <div class="col-md-4">
+                    <button class="update-player"><a title="Click to Update Player Info" href="{% url 'updatePlayer' player_info.id %}">Update Info</a></button>
+                  </div>
+                {% else %}
+                  <div class="col-md-2">
+                    <p>&nbsp</p>
+                  </div>
+                {% endif %}
+                {% if player %}
+                  <div class="col-md-4">
+                    <button class="update-player"><a title="Click to Update Player Stats" href="{% url 'updateStats' player_info.id %}">Update Stats</a></button>
+                  </div>
+                {% else %}
+                  <div class="col-md-4">
+                    <button class="update-player"><a title="Click to Add Player Stats" href="{% url 'updateStats' player_info.id %}">Add Stats</a></button>
+                  </div>
+                {% endif %}
+                <div class="col-md-4">
+                  <button class="view-player"><a title="Go Back to View NFL Team Details" href="{% url 'viewNFLTeam' player_info.teamId %}">Cancel (Back)</a></button>
+                </div>
+              </div>
+            {% endif %}
+            <div class="row no-gutters">
+              <div class="col-md-12">
+                <p>&nbsp</p>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+        <div class="card mb-3">
+          <div class="row no-gutters">
+            <div class="col-md-12"><a href="{% url 'index' %}">Return to main page</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
